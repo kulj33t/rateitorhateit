@@ -3,18 +3,31 @@ import { motion } from "framer-motion";
 import api from "../services/api";
 import SeriesCard from "../components/SeriesCard";
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 },
+};
+
 const Home = () => {
   const [series, setSeries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("popularityScore");
 
-  // ## Fetch Data Effect
   useEffect(() => {
     const fetchSeries = async () => {
       setLoading(true);
       try {
-        // Construct query string
         const query = `?search=${searchTerm}&sort=${sortBy}`;
         const { data } = await api.get(`/series${query}`);
         setSeries(data.data);
@@ -25,7 +38,6 @@ const Home = () => {
       }
     };
 
-    // Debounce to prevent API spam while typing
     const timeoutId = setTimeout(() => {
       fetchSeries();
     }, 500);
@@ -33,61 +45,114 @@ const Home = () => {
     return () => clearTimeout(timeoutId);
   }, [searchTerm, sortBy]);
 
-  // ## Render
   return (
-    <div className="min-h-screen">
-      {/* ## Header & Controls */}
-      <div className="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+    <div className="min-h-screen pb-20 max-w-7xl mx-auto px-6">
+      <div className="py-12 flex flex-col md:flex-row justify-between items-end gap-6 border-b border-gray-200 mb-10">
         <div>
-          <h1 className="text-4xl font-bold text-dark mb-2">Explore Series</h1>
-          <p className="text-medium">Rate, Rank, and Discover.</p>
+          <h1 className="text-5xl font-black text-dark tracking-tight mb-2">
+            Discover
+            <span className="text-medium">.</span>
+          </h1>
+          <p className="text-gray-500 font-medium text-lg">
+            Find your next obsession. Rate, rank, and track.
+          </p>
         </div>
 
-        <div className="flex gap-4 w-full md:w-auto">
-          {/* Search Input */}
-          <input
-            type="text"
-            placeholder="Search anime or tv..."
-            className="px-4 py-2 rounded-lg border-2 border-light bg-white focus:outline-none focus:border-medium w-full md:w-64 transition-colors"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+          <div className="relative group">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg
+                className="h-5 w-5 text-gray-400 group-focus-within:text-medium transition-colors"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search series..."
+              className="pl-11 pr-4 py-3 rounded-full border-2 border-transparent bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-medium/20 focus:border-medium w-full md:w-72 transition-all font-medium text-dark"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
 
-          {/* Sort Dropdown */}
-          <select
-            className="px-4 py-2 rounded-lg border-2 border-light bg-white focus:outline-none focus:border-medium cursor-pointer"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-          >
-            <option value="popularityScore">Most Popular</option>
-            <option value="top_rated">Top Rated (Avg)</option>
-            <option value="newest">Newest First</option>
-          </select>
+          <div className="relative">
+            <select
+              className="appearance-none px-6 py-3 rounded-full border-2 border-transparent bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-medium/20 focus:border-medium cursor-pointer font-bold text-gray-600 hover:text-medium transition-colors w-full md:w-auto pr-10"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="popularityScore">🔥 Most Popular</option>
+              <option value="top_rated">⭐ Top Rated</option>
+              <option value="newest">📅 Newest First</option>
+            </select>
+
+            <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
+              <svg
+                className="h-4 w-4 text-gray-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ## Content Grid */}
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-medium"></div>
+        <div className="flex flex-col justify-center items-center h-64 text-medium">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-medium mb-4"></div>
+          <p className="font-bold animate-pulse">Fetching library...</p>
         </div>
       ) : (
         <>
           {series.length === 0 ? (
-            <div className="text-center text-gray-500 mt-20">
-              <h2 className="text-2xl font-bold">No series found.</h2>
-              <p>Try searching for something else.</p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-20 bg-white rounded-3xl shadow-sm border border-gray-100"
+            >
+              <div className="text-6xl mb-4">🔍</div>
+              <h2 className="text-2xl font-bold text-dark mb-2">
+                No series found.
+              </h2>
+              <p className="text-gray-500">
+                We couldn't find anything matching "
+                <span className="font-bold text-dark">{searchTerm}</span>".
+              </p>
+              <button
+                onClick={() => setSearchTerm("")}
+                className="mt-6 text-medium font-bold hover:underline"
+              >
+                Clear Search
+              </button>
+            </motion.div>
           ) : (
             <motion.div
-              layout
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
             >
               {series.map((item) => (
-                <SeriesCard key={item._id} series={item} />
+                <motion.div key={item._id} variants={itemVariants}>
+                  <SeriesCard series={item} />
+                </motion.div>
               ))}
             </motion.div>
           )}

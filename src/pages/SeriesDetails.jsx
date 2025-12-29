@@ -3,17 +3,7 @@ import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import api from "../services/api";
 import AuthContext from "../context/AuthContext";
-
-const rankColors = {
-  F: "bg-gray-400",
-  D: "bg-red-500",
-  C: "bg-orange-400",
-  B: "bg-yellow-400",
-  A: "bg-green-400",
-  S: "bg-teal-400",
-  SS: "bg-blue-500",
-  SSS: "bg-purple-600",
-};
+import Rating from "../components/Rating";
 
 const SeriesDetails = () => {
   const { id } = useParams();
@@ -21,8 +11,9 @@ const SeriesDetails = () => {
 
   const [series, setSeries] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedRank, setSelectedRank] = useState(null);
+  const [libraryStatus, setLibraryStatus] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedRank, setSelectedRank] = useState(null);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -38,6 +29,18 @@ const SeriesDetails = () => {
     fetchDetails();
   }, [id]);
 
+  const handleLibraryAction = async (status) => {
+    if (!user) return alert("Please login to use the library!");
+    const newStatus = libraryStatus === status ? "remove" : status;
+    setLibraryStatus(newStatus === "remove" ? null : newStatus);
+
+    try {
+      await api.post(`/series/${id}/library`, { status: newStatus });
+    } catch (error) {
+      console.error("Failed to update library:", error);
+    }
+  };
+
   const handleRankSubmit = async (rank) => {
     if (!user) return alert("Please login to rank!");
     setSubmitting(true);
@@ -48,160 +51,151 @@ const SeriesDetails = () => {
       setSeries(data.data);
     } catch (error) {
       alert(error.response?.data?.error || "Ranking failed");
-      setSelectedRank(null);
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) return <div className="text-center mt-20">Loading...</div>;
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center text-dark font-bold">
+        Loading...
+      </div>
+    );
   if (!series)
     return <div className="text-center mt-20">Series not found.</div>;
 
   return (
-    <div className="bg-bgcolor min-h-screen pb-20">
-      <div
-        className="relative h-[50vh] w-full bg-cover bg-center"
-        style={{
-          backgroundImage: `url(${series.backdropImage || series.coverImage})`,
-        }}
-      >
-        <div className="absolute inset-0 bg-black bg-opacity-60 flex items-end">
-          <div className="container mx-auto px-4 pb-10">
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-5xl font-bold text-white mb-2"
-            >
-              {series.title}
-            </motion.h1>
-            <div className="flex gap-4 text-gray-300">
-              {series.genres?.map((g) => (
-                <span
-                  key={g}
-                  className="border border-gray-500 px-2 rounded text-sm"
+    <div className="bg-gray-50 min-h-screen pb-20">
+      {/* Hero Section */}
+      <div className="relative h-[60vh] w-full overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center blur-sm scale-105"
+          style={{
+            backgroundImage: `url(${
+              series.backdropImage || series.coverImage
+            })`,
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent" />
+
+        <div className="absolute inset-0 flex items-end">
+          <div className="container mx-auto px-6 pb-12 flex flex-col md:flex-row gap-8 items-end">
+            <motion.img
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              src={series.coverImage}
+              alt={series.title}
+              className="hidden md:block w-48 rounded-lg shadow-2xl border-4 border-white/10"
+            />
+
+            <div className="flex-1 text-white">
+              <motion.h1
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="text-4xl md:text-6xl font-black mb-2 tracking-tight"
+              >
+                {series.title}
+              </motion.h1>
+
+              <div className="flex flex-wrap gap-3 text-sm font-medium text-gray-300 mb-6">
+                {series.releaseDate && (
+                  <span className="bg-white/20 px-2 py-0.5 rounded backdrop-blur-md">
+                    {new Date(series.releaseDate).getFullYear()}
+                  </span>
+                )}
+                {series.genres?.map((g) => (
+                  <span
+                    key={g}
+                    className="border border-white/30 px-2 py-0.5 rounded"
+                  >
+                    {g}
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                <button
+                  onClick={() => handleLibraryAction("watching")}
+                  className={`px-8 py-3 rounded-full font-bold transition-all transform hover:scale-105 shadow-lg flex items-center gap-2 ${
+                    libraryStatus === "watching"
+                      ? "bg-gradient-to-r from-green-400 to-green-600 text-white ring-2 ring-white"
+                      : "bg-white text-gray-900 hover:bg-gray-100"
+                  }`}
                 >
-                  {g}
-                </span>
-              ))}
-              <span>
-                •{" "}
-                {series.releaseDate
-                  ? new Date(series.releaseDate).getFullYear()
-                  : "N/A"}
-              </span>
+                  {libraryStatus === "watching"
+                    ? "✓ Watching"
+                    : "▶ Start Watching"}
+                </button>
+
+                <button
+                  onClick={() => handleLibraryAction("watch_later")}
+                  className={`px-8 py-3 rounded-full font-bold transition-all transform hover:scale-105 shadow-lg ${
+                    libraryStatus === "watch_later"
+                      ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white ring-2 ring-white"
+                      : "bg-white/10 backdrop-blur-md text-white border border-white/20 hover:bg-white/20"
+                  }`}
+                >
+                  {libraryStatus === "watch_later"
+                    ? "✓ In Library"
+                    : "+ Watchlist"}
+                </button>
+              </div>
+            </div>
+
+            <div className="hidden md:block text-center bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
+              <div className="text-xs text-gray-400 uppercase tracking-widest mb-1">
+                Rank
+              </div>
+              <div className="text-5xl font-black text-white">
+                {series.rankLabel || "-"}
+              </div>
+              <div className="text-xs text-gray-400 mt-1">
+                {series.voteCount} Votes
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-1">
-          <img
-            src={series.coverImage}
-            alt={series.title}
-            className="w-full rounded-xl shadow-2xl border-4 border-white mb-6"
-          />
-
-          <div className="bg-white p-6 rounded-xl shadow-lg text-center">
-            <div className="text-sm text-gray-500 uppercase tracking-wide">
-              Average Rank
-            </div>
-            <div className={`text-6xl font-black my-2 text-dark`}>
-              {series.rankLabel || "N/A"}
-            </div>
-            <div className="text-medium text-sm">{series.voteCount} Votes</div>
-
-            <div className="flex justify-center gap-8 mt-4 border-t pt-4">
-              <div>
-                <span className="text-red-500 text-xl">❤️</span>{" "}
-                {series.simpleLikes}
-              </div>
-              <div>
-                <span className="text-dark text-xl">💔</span>{" "}
-                {series.simpleHates}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="md:col-span-2 space-y-8">
-          <div className="bg-white p-6 rounded-xl shadow-lg">
-            <h3 className="text-2xl font-bold text-dark mb-3">Overview</h3>
-            <p className="text-dark leading-relaxed">{series.description}</p>
-          </div>
+      <div className="container mx-auto px-6 mt-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="lg:col-span-2 space-y-10">
+          <section>
+            <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <span className="w-1 h-8 bg-yellow-400 rounded-full"></span>
+              Overview
+            </h3>
+            <p className="text-gray-600 leading-relaxed text-lg">
+              {series.description}
+            </p>
+          </section>
 
           {series.trailerUrl && (
-            <div className="bg-black rounded-xl overflow-hidden shadow-lg aspect-video">
-              <iframe
-                width="100%"
-                height="100%"
-                src={`https://www.youtube.com/embed/${
-                  series.trailerUrl.split("v=")[1]?.split("&")[0]
-                }`}
-                title="YouTube video player"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
-            </div>
+            <section className="rounded-2xl overflow-hidden shadow-2xl">
+              <div className="aspect-video">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src={`https://www.youtube.com/embed/${
+                    series.trailerUrl.split("v=")[1]?.split("&")[0]
+                  }`}
+                  title="Trailer"
+                  allowFullScreen
+                  className="border-none"
+                ></iframe>
+              </div>
+            </section>
           )}
+        </div>
 
-          <div className="bg-white p-8 rounded-xl shadow-lg border-t-4 border-medium">
-            <h3 className="text-2xl font-bold text-dark mb-6">
-              Rate this Series
-            </h3>
-
-            <div className="flex flex-wrap gap-2 justify-center mb-8">
-              {Object.keys(rankColors).map((rank) => (
-                <button
-                  key={rank}
-                  onClick={() => handleRankSubmit(rank)}
-                  disabled={submitting}
-                  className={`
-                    w-12 h-12 rounded-full font-bold text-white shadow-md transition-transform hover:scale-110 active:scale-95
-                    ${rankColors[rank]} 
-                    ${
-                      selectedRank === rank
-                        ? "ring-4 ring-offset-2 ring-dark"
-                        : ""
-                    }
-                  `}
-                >
-                  {rank}
-                </button>
-              ))}
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="font-bold text-dark">Community Consensus</h4>
-              {Object.keys(rankColors)
-                .reverse()
-                .map((rank) => {
-                  const count = series.ratingDistribution?.[rank] || 0;
-                  const percentage =
-                    series.voteCount > 0 ? (count / series.voteCount) * 100 : 0;
-
-                  return (
-                    <div key={rank} className="flex items-center gap-3">
-                      <span className="w-8 font-bold text-right text-sm">
-                        {rank}
-                      </span>
-                      <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${percentage}%` }}
-                          transition={{ duration: 1, ease: "easeOut" }}
-                          className={`h-full ${rankColors[rank]}`}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-500 w-8">
-                        {Math.round(percentage)}%
-                      </span>
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
+        {/* Sidebar: Replaced with Clean Component */}
+        <div className="lg:col-span-1">
+          <Rating
+            series={series}
+            onRate={handleRankSubmit}
+            selectedRank={selectedRank}
+            isSubmitting={submitting}
+          />
         </div>
       </div>
     </div>

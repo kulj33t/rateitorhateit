@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AuthContext from "../context/AuthContext";
 
 const Login = () => {
@@ -24,46 +24,69 @@ const Login = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-[80vh]">
-      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-xl border-t-4 border-medium">
-        <h2 className="text-3xl font-bold text-dark mb-6 text-center">
-          Welcome Back
-        </h2>
+    <div className="min-h-screen flex items-center justify-center bg-bgcolor px-4 py-12">
+      <div className="w-full max-w-md bg-white p-10 rounded-3xl shadow-2xl border border-light/20">
+        <div className="text-center mb-10">
+          <h2 className="text-4xl font-black text-dark mb-2">Welcome Back</h2>
+          <p className="text-medium font-medium">
+            Sign in to access your library and rankings.
+          </p>
+        </div>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded mb-6 text-sm font-medium">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-dark font-medium mb-1">Email</label>
+            <label className="block text-sm font-bold text-dark mb-2 ml-1">
+              Email Address
+            </label>
             <input
               type="email"
               name="email"
               required
-              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:border-medium"
+              placeholder="you@example.com"
+              className="w-full px-5 py-3 rounded-xl bg-bgcolor border-2 border-transparent focus:bg-white focus:border-medium focus:ring-0 transition-all outline-none text-dark font-medium placeholder-gray-400"
               onChange={handleChange}
             />
           </div>
+
           <div>
-            <label className="block text-dark font-medium mb-1">Password</label>
+            <div className="flex justify-between items-center mb-2 ml-1">
+              <label className="block text-sm font-bold text-dark">
+                Password
+              </label>
+            </div>
             <input
               type="password"
               name="password"
               required
-              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:border-medium"
+              placeholder="••••••••"
+              className="w-full px-5 py-3 rounded-xl bg-bgcolor border-2 border-transparent focus:bg-white focus:border-medium focus:ring-0 transition-all outline-none text-dark font-medium placeholder-gray-400"
               onChange={handleChange}
             />
           </div>
+
           <button
             type="submit"
-            className="w-full bg-dark text-white py-2 rounded font-bold hover:bg-medium transition-colors"
+            className="w-full py-4 rounded-xl bg-linear-to-r from-teal-500 to-emerald-500 text-white font-bold text-lg shadow-lg hover:shadow-emerald-500/30 hover:scale-[1.02] transition-all active:scale-95 mt-4"
           >
-            Login
+            Sign In
           </button>
         </form>
+
+        <p className="mt-8 text-center text-gray-400 text-sm font-medium">
+          New to RateIt?{" "}
+          <Link
+            to="/register"
+            className="text-medium font-bold hover:underline"
+          >
+            Create an account
+          </Link>
+        </p>
       </div>
     </div>
   );
