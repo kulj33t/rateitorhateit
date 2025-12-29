@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  /* Your Custom Color Palette */
+  --color-dark: #213448;      /* Deep Navy */
+  --color-medium: #547792;    /* Slate Blue */
+  --color-light: #94B4C1;     /* Soft Blue */
+  --color-bgcolor: #EAE0CF;   /* Paper Cream */
+
+  /* Optional: Add a nice font if you want */
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
+/* Base Styles */
+body {
+  background-color: var(--color-bgcolor);
+  color: var(--color-dark);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbar (Optional - adds to the sleek look) */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bgcolor);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-medium);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-dark);
+}
