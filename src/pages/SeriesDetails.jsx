@@ -29,6 +29,21 @@ const SeriesDetails = () => {
     fetchDetails();
   }, [id]);
 
+  useEffect(() => {
+    const fetchUserRating = async () => {
+      if (!user) return;
+      try {
+        const { data } = await api.get(`/series/${id}/user-rating`);
+        if (data.success && data.rank) {
+          setSelectedRank(data.rank);
+        }
+      } catch (error) {
+        console.error("Could not fetch user rating", error);
+      }
+    };
+    fetchUserRating();
+  }, [id, user]);
+
   const handleLibraryAction = async (status) => {
     if (!user) return alert("Please login to use the library!");
     const newStatus = libraryStatus === status ? "remove" : status;
@@ -67,7 +82,6 @@ const SeriesDetails = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen pb-20">
-      {/* Hero Section */}
       <div className="relative h-[60vh] w-full overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center blur-sm scale-105"
@@ -188,7 +202,6 @@ const SeriesDetails = () => {
           )}
         </div>
 
-        {/* Sidebar: Replaced with Clean Component */}
         <div className="lg:col-span-1">
           <Rating
             series={series}
