@@ -21,18 +21,27 @@ const itemVariants = {
 const Home = () => {
   const [series, setSeries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("popularityScore");
 
   useEffect(() => {
     const fetchSeries = async () => {
       setLoading(true);
+      setError(null);
+
       try {
         const query = `?search=${searchTerm}&sort=${sortBy}`;
-        const { data } = await api.get(`/series${query}`);
-        setSeries(data.data);
-      } catch (error) {
-        console.error("Failed to fetch series:", error);
+        const response = await api.get(`/series${query}`);
+
+        if (response.data && Array.isArray(response.data.data)) {
+          setSeries(response.data.data);
+        } else {
+          setSeries([]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch series:", err);
+        setError("Unable to load series. The server might be down or busy.");
       } finally {
         setLoading(false);
       }
@@ -90,11 +99,10 @@ const Home = () => {
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
             >
-              <option value="popularityScore">🔥 Most Popular</option>
-              <option value="top_rated">⭐ Top Rated</option>
-              <option value="newest">📅 Newest First</option>
+              <option value="popularityScore">Most Popular</option>
+              <option value="top_rated">Top Rated</option>
+              <option value="newest">Newest First</option>
             </select>
-
             <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
               <svg
                 className="h-4 w-4 text-gray-500"
@@ -119,44 +127,57 @@ const Home = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-medium mb-4"></div>
           <p className="font-bold animate-pulse">Fetching library...</p>
         </div>
+      ) : error ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-20 bg-red-50 rounded-3xl shadow-sm border border-red-100"
+        >
+          <h2 className="text-2xl font-bold text-red-800 mb-2">
+            Connection Issue
+          </h2>
+          <p className="text-red-600 max-w-md mx-auto">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-6 px-6 py-2 bg-white text-red-600 font-bold rounded-full shadow-sm hover:shadow-md transition-all border border-red-200"
+          >
+            Try Refreshing
+          </button>
+        </motion.div>
+      ) : series.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-20 bg-white rounded-3xl shadow-sm border border-gray-100"
+        >
+          <div className="text-6xl mb-4">🔍</div>
+          <h2 className="text-2xl font-bold text-dark mb-2">
+            No series found.
+          </h2>
+          <p className="text-gray-500">
+            We couldn't find anything matching "
+            <span className="font-bold text-dark">{searchTerm}</span>".
+          </p>
+          <button
+            onClick={() => setSearchTerm("")}
+            className="mt-6 text-medium font-bold hover:underline"
+          >
+            Clear Search
+          </button>
+        </motion.div>
       ) : (
-        <>
-          {series.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-20 bg-white rounded-3xl shadow-sm border border-gray-100"
-            >
-              <div className="text-6xl mb-4">🔍</div>
-              <h2 className="text-2xl font-bold text-dark mb-2">
-                No series found.
-              </h2>
-              <p className="text-gray-500">
-                We couldn't find anything matching "
-                <span className="font-bold text-dark">{searchTerm}</span>".
-              </p>
-              <button
-                onClick={() => setSearchTerm("")}
-                className="mt-6 text-medium font-bold hover:underline"
-              >
-                Clear Search
-              </button>
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
+        >
+          {series.map((item) => (
+            <motion.div key={item._id} variants={itemVariants}>
+              <SeriesCard series={item} />
             </motion.div>
-          ) : (
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="show"
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
-            >
-              {series.map((item) => (
-                <motion.div key={item._id} variants={itemVariants}>
-                  <SeriesCard series={item} />
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
-        </>
+          ))}
+        </motion.div>
       )}
     </div>
   );
